@@ -6,7 +6,7 @@ import { lerp } from './Math';
 
 const ORIGINAL_SIZE = new s(window.innerHeight * 1);
 const VISUAL_SIZE = new s(window.innerHeight * 0.3);
-const VISUAL_SIZE_HOVER = new s(window.innerHeight * 0.4);
+const VISUAL_SIZE_HOVER = new s(window.innerHeight * 0.45);
 const VISUAL_SIZE_DETAIL = new s(window.innerHeight * 0.8);
 
 const ACTIVE_INDEX = new s(null);
