@@ -3,6 +3,7 @@ import C from '@superstructure.net/c';
 import { S, s } from '@superstructure.net/s';
 import Scroller from '@superstructure.net/scroller';
 import { lerp } from './Math';
+import { getNodeFromString } from './Dom';
 
 const ORIGINAL_SIZE = new s(window.innerHeight * 1);
 const VISUAL_SIZE = new s(window.innerHeight * 0.3);
@@ -10,6 +11,7 @@ const VISUAL_SIZE_HOVER = new s(window.innerHeight * 0.45);
 const VISUAL_SIZE_DETAIL = new s(window.innerHeight * 0.8);
 
 const SMOOTH_SCROLL = true;
+const SCROLL_LOOP = false;
 
 const ACTIVE_INDEX = new s(null);
 const MODE = new s(null);
@@ -45,6 +47,9 @@ class Rows extends M {
     this.totalHeight = 0; // real time total height
     this.scrollPosition = 0; // realtime scroll Position in px
     this.scrollOffset = 0; // realtime scroll offset for detail mode
+    this.scrollLoopPoint = Infinity;
+
+    this.isScrollJumping = false;
 
     this.frame = null;
 
@@ -184,6 +189,7 @@ class Rows extends M {
     // SCALES
     // OFFSETS
     let totalOffset = 0;
+    let scrollLoopPoint = 0;
     for (let i = 0; i < this.totalRows; i++) {
       // LERP scale
       this.scales[i] = lerp(this.scales[i], this.targetScales[i], 0.1);
@@ -191,32 +197,49 @@ class Rows extends M {
       this.offsets[i] = totalOffset;
 
       totalOffset += this.scales[i] * ORIGINAL_SIZE.get();
+
+      if (i < 10) {
+        scrollLoopPoint += this.scales[i] * ORIGINAL_SIZE.get();
+      }
     }
 
     // SCROLL POSITION
     this.totalHeight = totalOffset;
+    this.scrollLoopPoint = scrollLoopPoint;
+
+    // since we do not update the scroller's scrollPositionMax value
+    // in realtime with total height for performance reasons,
+    // we need to calculate the scroll position manually.
+    // Not needed in looped scroll, since loop relies on the actual scrollPosition
+    const scrollPosition = SCROLL_LOOP
+      ? scroller.getScrollPosition()
+      : scroller.getScrollProgress() * (this.totalHeight - window.innerHeight);
 
     if (SMOOTH_SCROLL) {
-      this.scrollPosition = lerp(
-        this.scrollPosition,
-        scroller.getScrollProgress() * (this.totalHeight - window.innerHeight),
-        0.05
-      );
+      this.scrollPosition = lerp(this.scrollPosition, scrollPosition, 0.05);
     } else {
-      this.scrollPosition =
-        scroller.getScrollProgress() * (this.totalHeight - window.innerHeight);
+      this.scrollPosition = scrollPosition;
     }
 
     /**
      * manual infinite scroll loop
-    if (this.totalHeight > window.innerHeight) {
-      if (this.scrollPosition > 2000) {
-        scroller.scrollTo(1);
-      } else if (this.scrollPosition <= 0) {
-        scroller.scrollTo(2000);
+     **/
+    if (SCROLL_LOOP) {
+      if (this.totalHeight > window.innerHeight) {
+        if (this.scrollPosition > this.scrollLoopPoint) {
+          this.isScrollJumping = true;
+          scroller.scrollTo(2);
+        } else if (this.scrollPosition <= 0) {
+          this.isScrollJumping = true;
+          scroller.scrollTo(this.scrollLoopPoint);
+
+          scroller.getScrollProgress() *
+            (this.totalHeight - window.innerHeight);
+        } else {
+          this.isScrollJumping = false;
+        }
       }
     }
-     */
 
     // SCROLL OFFSET
     // needs to be calculated each frame
@@ -284,12 +307,7 @@ class Row {
     this.y = 0;
     this.visibility = false;
 
-    this.items = null;
-    if (this.element.querySelector('[data-Items-role="wrapper"]')) {
-      this.items = new Items(
-        this.element.querySelector('[data-Items-role="wrapper"]')
-      );
-    }
+    this.items = new Items(this.element);
 
     this.bindEvents();
     this.observe();
@@ -397,11 +415,40 @@ class Row {
 }
 
 class Items {
-  constructor(element) {
-    this.element = element;
-    if (!this.element) return;
+  constructor(wrapperElement) {
+    this.wrapperElement = wrapperElement;
+    if (!this.wrapperElement) return;
+
+    this.element = null;
 
     this.scale = 1;
+
+    this.build();
+  }
+
+  build() {
+    this.element = getNodeFromString(`
+        <div data-Items-role="wrapper">
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+          <div data-Items-role="item"></div>
+        </div>
+        `);
+
+    this.wrapperElement.appendChild(this.element);
+  }
+
+  destroy() {
+    if (!this.element) return;
+
+    this.element.remove();
   }
 
   setScale(scale) {
