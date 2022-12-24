@@ -47,7 +47,6 @@ class Frame extends M {
             window.Rows.scrollOffset,
       0.1
     );
-
     this.bottom = lerp(
       this.bottom,
       ACTIVE_INDEX.get() === null
@@ -68,11 +67,13 @@ class Frame extends M {
     )
       return;
 
-    this.elements.cornerTL.style.transform = this.elements.cornerTR.style.transform = `translateY(${this.top}px)`;
+    this.elements.cornerTL.style.transform =
+      this.elements.cornerTR.style.transform = `translateY(${this.top}px)`;
 
-    this.elements.cornerBL.style.transform = this.elements.cornerBR.style.transform = `translateY(${
-      this.bottom - window.innerHeight
-    }px)`;
+    this.elements.cornerBL.style.transform =
+      this.elements.cornerBR.style.transform = `translateY(${
+        this.bottom - window.innerHeight
+      }px)`;
   }
 
   bindEvents() {

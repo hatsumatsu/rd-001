@@ -48,16 +48,31 @@ body {
 }
 
 [data-Rows-role='row']::before {
-  content: attr(data-index);
+  content: attr(data-id);
 
   position: absolute;
   left: 0;
   top: 0;
+  z-index: 10;
 
   margin: 0.2em;
 
   font-size: 10vw;
-  opacity: 0.4;
+  opacity: 0.8;
+}
+
+[data-Rows-role='row']::after {
+  content: attr(data-index);
+
+  position: absolute;
+  left: 80vw;
+  top: 0;
+  z-index: 10;
+
+  margin: 0.2em;
+
+  font-size: 10vw;
+  opacity: 0.2;
 }
 
 [data-Frame-role~='corner'] {
