@@ -9,10 +9,13 @@ const VISUAL_SIZE = new s(window.innerHeight * 0.3);
 const VISUAL_SIZE_HOVER = new s(window.innerHeight * 0.45);
 const VISUAL_SIZE_DETAIL = new s(window.innerHeight * 0.8);
 
+const SMOOTH_SCROLL = true;
+
 const ACTIVE_INDEX = new s(null);
 const MODE = new s(null);
 
 const scroller = new Scroller();
+scroller.scrollTo(1);
 
 /**
  * Rows
@@ -192,8 +195,28 @@ class Rows extends M {
 
     // SCROLL POSITION
     this.totalHeight = totalOffset;
-    this.scrollPosition =
-      scroller.getScrollProgress() * (this.totalHeight - window.innerHeight);
+
+    if (SMOOTH_SCROLL) {
+      this.scrollPosition = lerp(
+        this.scrollPosition,
+        scroller.getScrollProgress() * (this.totalHeight - window.innerHeight),
+        0.05
+      );
+    } else {
+      this.scrollPosition =
+        scroller.getScrollProgress() * (this.totalHeight - window.innerHeight);
+    }
+
+    /**
+     * manual infinite scroll loop
+    if (this.totalHeight > window.innerHeight) {
+      if (this.scrollPosition > 2000) {
+        scroller.scrollTo(1);
+      } else if (this.scrollPosition <= 0) {
+        scroller.scrollTo(2000);
+      }
+    }
+     */
 
     // SCROLL OFFSET
     // needs to be calculated each frame
